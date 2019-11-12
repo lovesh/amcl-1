@@ -79,14 +79,24 @@ impl ECP2 {
     }
 
     /* construct this from x - but set to O if not on curve */
-    pub fn new_fp2(ix: &FP2) -> ECP2 {
+    pub fn new_fp2(ix: &FP2, s:isize) -> ECP2 {
         let mut E = ECP2::new();
         E.x.copy(&ix);
         E.y.one();
         E.z.one();
         E.x.norm();
         let mut rhs = ECP2::rhs(&E.x);
-        if rhs.sqrt() {
+        /*if rhs.sqrt() {
+            E.y.copy(&rhs);
+        } else {
+            E.inf();
+        }*/
+        if rhs.qr() == 1 {
+            rhs.sqrt();
+            if rhs.sign() != s {
+                rhs.neg();
+            }
+            rhs.reduce();
             E.y.copy(&rhs);
         } else {
             E.inf();
@@ -240,29 +250,38 @@ impl ECP2 {
     }
 
     /* convert to byte array */
-    pub fn tobytes(&self, b: &mut [u8]) {
+    pub fn tobytes(&self, b: &mut [u8], compress: bool) {
         let mut t: [u8; big::MODBYTES as usize] = [0; big::MODBYTES as usize];
         let mb = big::MODBYTES as usize;
         let mut W = ECP2::new();
         W.copy(self);
-
         W.affine();
+
         W.x.geta().tobytes(&mut t);
         for i in 0..mb {
-            b[i] = t[i]
+            b[i+1] = t[i]
         }
         W.x.getb().tobytes(&mut t);
         for i in 0..mb {
-            b[i + mb] = t[i]
+            b[i + mb + 1] = t[i]
         }
 
-        W.y.geta().tobytes(&mut t);
-        for i in 0..mb {
-            b[i + 2 * mb] = t[i]
-        }
-        W.y.getb().tobytes(&mut t);
-        for i in 0..mb {
-            b[i + 3 * mb] = t[i]
+        if !compress {
+            b[0] = 0x04;
+            W.y.geta().tobytes(&mut t);
+            for i in 0..mb {
+                b[i + 2 * mb + 1] = t[i]
+            }
+            W.y.getb().tobytes(&mut t);
+            for i in 0..mb {
+                b[i + 3 * mb + 1] = t[i]
+            }
+        } else {
+            if W.y.sign() == 1 {
+                b[0] = 0x03;
+            } else {
+                b[0] = 0x02;
+            }
         }
     }
 
@@ -270,28 +289,34 @@ impl ECP2 {
     pub fn frombytes(b: &[u8]) -> ECP2 {
         let mut t: [u8; big::MODBYTES as usize] = [0; big::MODBYTES as usize];
         let mb = big::MODBYTES as usize;
+        let typ= b[0] as isize;
 
         for i in 0..mb {
-            t[i] = b[i]
+            t[i] = b[i+1]
         }
         let mut ra = BIG::frombytes(&t);
         for i in 0..mb {
-            t[i] = b[i + mb]
+            t[i] = b[i + mb + 1]
         }
         let mut rb = BIG::frombytes(&t);
         let rx = FP2::new_bigs(&ra, &rb);
 
-        for i in 0..mb {
-            t[i] = b[i + 2 * mb]
-        }
-        ra.copy(&BIG::frombytes(&t));
-        for i in 0..mb {
-            t[i] = b[i + 3 * mb]
-        }
-        rb.copy(&BIG::frombytes(&t));
-        let ry = FP2::new_bigs(&ra, &rb);
+        if typ==0x04 {
+            for i in 0..mb {
+                t[i] = b[i + 2 * mb + 1]
+            }
+            ra.copy(&BIG::frombytes(&t));
+            for i in 0..mb {
+                t[i] = b[i + 3 * mb + 1]
+            }
+            rb.copy(&BIG::frombytes(&t));
+            let ry = FP2::new_bigs(&ra, &rb);
 
-        return ECP2::new_fp2s(&rx, &ry);
+            ECP2::new_fp2s(&rx, &ry)
+        } else {
+            ECP2::new_fp2(&rx, typ & 1)
+        }
+
     }
 
     /* convert this to hex string */
@@ -725,7 +750,7 @@ impl ECP2 {
 
         loop {
             let X = FP2::new_bigs(&one, &x);
-            Q = ECP2::new_fp2(&X);
+            Q = ECP2::new_fp2(&X, 0);
             if !Q.is_infinity() {
                 break;
             }

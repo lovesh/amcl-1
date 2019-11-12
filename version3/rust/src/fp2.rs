@@ -116,6 +116,10 @@ impl FP2 {
         return self.a.iszilch() && self.b.iszilch();
     }
 
+    pub fn sign(&mut self) -> isize {
+        return self.geta().parity();
+    }
+
     pub fn cmove(&mut self, g: &FP2, d: isize) {
         self.a.cmove(&g.a, d);
         self.b.cmove(&g.b, d);
@@ -130,6 +134,18 @@ impl FP2 {
     /* test self=x */
     pub fn equals(&self, x: &FP2) -> bool {
         return self.a.equals(&x.a) && self.b.equals(&x.b);
+    }
+
+    /* extract a */
+    #[allow(non_snake_case)]
+    pub fn getA(&mut self) -> FP {
+        return self.a;
+    }
+
+    /* extract b */
+    #[allow(non_snake_case)]
+    pub fn getB(&mut self) -> FP {
+        return self.b;
     }
 
     /* extract a */
@@ -288,6 +304,13 @@ impl FP2 {
         self.a.xes = 3;
         self.b.x.copy(&FP::modulo(&mut e));
         self.b.xes = 2;
+    }
+
+    pub fn qr(&mut self) -> isize {
+        let mut c= FP2::new_copy(self);
+        c.conj();
+        c.mul(self);
+        return c.getA().qr(None);
     }
 
     /* sqrt(a+ib) = sqrt(a+sqrt(a*a-n*b*b)/2)+ib/(2*sqrt(a+sqrt(a*a-n*b*b)/2)) */

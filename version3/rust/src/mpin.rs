@@ -344,7 +344,7 @@ pub fn recombine_g2(w1: &[u8], w2: &[u8], w: &mut [u8]) -> isize {
 
     P.add(&mut Q);
 
-    P.tobytes(w);
+    P.tobytes(w, false);
     return 0;
 }
 
@@ -363,7 +363,7 @@ pub fn get_server_secret(s: &[u8], sst: &mut [u8]) -> isize {
 
     let mut sc = BIG::frombytes(s);
     Q = pair::g2mul(&mut Q, &mut sc);
-    Q.tobytes(sst);
+    Q.tobytes(sst, false);
     return 0;
 }
 

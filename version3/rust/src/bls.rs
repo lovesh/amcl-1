@@ -57,7 +57,7 @@ pub fn key_pair_generate(mut rng: &mut RAND, s: &mut [u8], w: &mut [u8]) -> isiz
     let g = ECP2::generator();
     let mut sc = BIG::randomnum(&q, &mut rng);
     sc.tobytes(s);
-    pair::g2mul(&g, &mut sc).tobytes(w);
+    pair::g2mul(&g, &mut sc).tobytes(w, false);
     return BLS_OK;
 }
 

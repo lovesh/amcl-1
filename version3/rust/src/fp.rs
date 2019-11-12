@@ -428,7 +428,7 @@ impl FP {
 
     // See eprint paper https://eprint.iacr.org/2018/1038
     // return this^(p-3)/4 or this^(p-5)/8
-    pub fn fpow(&mut self) -> FP {
+    pub fn fpow(&self) -> FP {
         let ac: [isize; 11] = [1, 2, 3, 6, 12, 15, 30, 60, 120, 240, 255];
         let mut xp: [FP; 11] = [
             FP::new(),
@@ -576,6 +576,7 @@ impl FP {
         }
         return r;
     }
+
     /* self=1/self mod Modulus */
     pub fn inverse(&mut self) {
         if MODTYPE == ModType::PSEUDO_MERSENNE || MODTYPE == ModType::GENERALISED_MERSENNE {
@@ -600,6 +601,49 @@ impl FP {
         }
     }
 
+    /* Test for Quadratic Residue */
+    pub fn qr(&self,give_hint: Option<&mut FP>) -> isize {
+        let e= MOD8 as isize;
+        let mut r= FP::new_copy(self);
+        r.invsqrt();
+        if let Some(hint) = give_hint {
+            hint.copy(&r);
+        }
+
+        r.sqr();
+        r.mul(self);
+        for _ in 0..e-1 {
+            r.sqr();
+        }
+
+        //for _ in 0..e {
+        //    r.sqr();
+        //}
+        //let mut s=FP::new_copy(self);
+        //for _ in 0..e-1 {
+        //    s.sqr();
+        //}
+        //r.mul(&s);
+        return r.isunity() as isize;
+    }
+
+    /* Pseudo_inverse square root */
+    pub fn invsqrt(&mut self) {
+        if MODTYPE == ModType::PSEUDO_MERSENNE || MODTYPE == ModType::GENERALISED_MERSENNE {
+            self.copy(&self.fpow());
+
+        } else {
+            let e= MOD8 as usize;
+            let mut m = BIG::new_ints(&rom::MODULUS);
+            m.dec(1);
+            m.shr(e);
+            m.dec(1);
+            m.fshr(1);
+
+            self.pow(&m);
+        }
+    }
+
     /* return TRUE if self==a */
     pub fn equals(&self, a: &FP) -> bool {
         let mut f = FP::new_copy(self);
@@ -613,7 +657,7 @@ impl FP {
     }
 
     /* return self^e mod Modulus */
-    pub fn pow(&mut self, e: &mut BIG) -> FP {
+    pub fn pow(&mut self, e: &BIG) -> FP {
         let mut tb: [FP; 16] = [
             FP::new(),
             FP::new(),
@@ -713,5 +757,12 @@ impl FP {
         let mut p = BIG::new_ints(&rom::MODULUS);
         let mut w = self.redc();
         return w.jacobi(&mut p);
+    }
+
+    /* test this=0? */
+    pub fn isunity(&self) -> bool {
+        let mut a = FP::new_copy(self);
+        a.reduce();
+        return a.redc().isunity();
     }
 }
