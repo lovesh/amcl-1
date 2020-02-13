@@ -86,11 +86,6 @@ impl ECP2 {
         E.z.one();
         E.x.norm();
         let mut rhs = ECP2::rhs(&E.x);
-        /*if rhs.sqrt() {
-            E.y.copy(&rhs);
-        } else {
-            E.inf();
-        }*/
         if rhs.qr() == 1 {
             rhs.sqrt();
             if rhs.sign() != s {

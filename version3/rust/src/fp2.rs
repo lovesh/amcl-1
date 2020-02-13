@@ -116,6 +116,7 @@ impl FP2 {
         return self.a.iszilch() && self.b.iszilch();
     }
 
+    // Return parity of `self.a`
     pub fn sign(&mut self) -> isize {
         return self.geta().parity();
     }

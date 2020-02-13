@@ -208,28 +208,33 @@ func (E *ECP2) ToBytes(b []byte,compress bool) {
 func ECP2_fromBytes(b []byte) *ECP2 {
 	var t [int(MODBYTES)]byte
 	MB := int(MODBYTES)
+    typ := int(b[0])
 
 	for i := 0; i < MB; i++ {
-		t[i] = b[i]
+		t[i] = b[i+1]
 	}
 	ra := FromBytes(t[:])
 	for i := 0; i < MB; i++ {
-		t[i] = b[i+MB]
+		t[i] = b[i+MB+1]
 	}
 	rb := FromBytes(t[:])
 	rx := NewFP2bigs(ra, rb)
 
-	for i := 0; i < MB; i++ {
-		t[i] = b[i+2*MB]
-	}
-	ra = FromBytes(t[:])
-	for i := 0; i < MB; i++ {
-		t[i] = b[i+3*MB]
-	}
-	rb = FromBytes(t[:])
-	ry := NewFP2bigs(ra, rb)
+    if typ == 0x04 {
+        for i := 0; i < MB; i++ {
+    		t[i] = b[i+2*MB+1]
+    	}
+    	ra = FromBytes(t[:])
+    	for i := 0; i < MB; i++ {
+    		t[i] = b[i+3*MB+1]
+    	}
+    	rb = FromBytes(t[:])
+    	ry := NewFP2bigs(ra, rb)
 
-	return NewECP2fp2s(rx, ry)
+    	return NewECP2fp2s(rx, ry)
+    } else {
+        return NewECP2fp2(rx,typ&1)
+    }
 }
 
 /* convert this to hex string */
@@ -281,19 +286,24 @@ func NewECP2fp2s(ix *FP2, iy *FP2) *ECP2 {
 }
 
 /* construct this from x - but set to O if not on curve */
-func NewECP2fp2(ix *FP2) *ECP2 {
+func NewECP2fp2(ix *FP2, s int) *ECP2 {
 	E := new(ECP2)
 	E.x = NewFP2copy(ix)
 	E.y = NewFP2int(1)
 	E.z = NewFP2int(1)
 	E.x.norm()
 	rhs := RHS2(E.x)
-	if rhs.sqrt() {
-		E.y.copy(rhs)
-	} else {
-		E.inf()
-	}
-	return E
+	if rhs.qr() == 1 {
+        rhs.sqrt()
+        if rhs.sign() != s {
+            rhs.neg()
+        }
+        rhs.reduce()
+        E.y.copy(rhs)
+    } else {
+        E.inf()
+    }
+    return E
 }
 
 /* this+=this */

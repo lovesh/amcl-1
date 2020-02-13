@@ -155,6 +155,11 @@ func (F *FP2) neg() {
 	F.a.copy(t)
 }
 
+func (F *FP2) sign() int {
+	m := F.a.redc()
+	return m.parity()
+}
+
 /* set to a-ib */
 func (F *FP2) conj() {
 	F.b.neg()
@@ -293,6 +298,14 @@ func (F *FP2) sqrt() bool {
 	w2.inverse()
 	F.b.mul(w2)
 	return true
+}
+
+/* Return 1 if Quadratic residue else 0 */
+func (F *FP2) qr() int {
+	c := NewFP2copy(F)
+	c.conj()
+	c.mul(F)
+	return c.a.qr(nil)
 }
 
 /* output to hex string */

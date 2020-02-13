@@ -46,6 +46,10 @@ public final class FP2 {
 		return (a.iszilch() && b.iszilch());
 	}
 
+	public int sign() {
+		return a.redc().parity()
+	}
+
 	public void cmove(FP2 g,int d)
 	{
 		a.cmove(g.a,d);
@@ -108,7 +112,7 @@ public final class FP2 {
 
 /* extract a */
 	public BIG getA()
-	{ 
+	{
 		return a.redc();
 	}
 
@@ -224,7 +228,7 @@ public final class FP2 {
 		if ((long)(a.XES+b.XES)*(y.a.XES+y.b.XES)>(long)CONFIG_FIELD.FEXCESS)
 		{
 			if (a.XES>1) a.reduce();
-			if (b.XES>1) b.reduce();		
+			if (b.XES>1) b.reduce();
 		}
 
 		DBIG pR=new DBIG(0);
@@ -250,6 +254,16 @@ public final class FP2 {
 		b.x.copy(FP.mod(E)); b.XES=2;
 	}
 
+	public int qr()
+	{
+		FP2 c = new FP2(this);
+		c.conj();
+		c.mul(this);
+
+		// XXX: BIG does not have `qr` function
+		return c.geta().qr(null);
+	}
+
 /* sqrt(a+ib) = sqrt(a+sqrt(a*a-n*b*b)/2)+ib/(2*sqrt(a+sqrt(a*a-n*b*b)/2)) */
 /* returns true if this is QR */
 	public boolean sqrt()
@@ -260,11 +274,11 @@ public final class FP2 {
 		w1.sqr(); w2.sqr(); w1.add(w2);
 		if (w1.jacobi()!=1) { zero(); return false; }
 		w1=w1.sqrt();
-		w2.copy(a); w2.add(w1); 
+		w2.copy(a); w2.add(w1);
 		w2.norm(); w2.div2();
 		if (w2.jacobi()!=1)
 		{
-			w2.copy(a); w2.sub(w1); 
+			w2.copy(a); w2.sub(w1);
 			w2.norm(); w2.div2();
 			if (w2.jacobi()!=1) { zero(); return false; }
 		}
@@ -277,12 +291,12 @@ public final class FP2 {
 	}
 
 /* output to hex string */
-	public String toString() 
+	public String toString()
 	{
 		return ("["+a.toString()+","+b.toString()+"]");
 	}
 
-	public String toRawString() 
+	public String toRawString()
 	{
 		return ("["+a.toRawString()+","+b.toRawString()+"]");
 	}

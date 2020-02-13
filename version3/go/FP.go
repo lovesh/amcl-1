@@ -505,6 +505,48 @@ func (F *FP) inverse() {
 
 }
 
+func (F *FP) isunity() bool {
+	W:=NewFPcopy(F)
+	W.reduce()
+	return W.redc().isunity()
+}
+
+/* Return 1 if Quadratic residue else 0 */
+func (F *FP) qr(h *FP) int {
+	r:=NewFPcopy(F)
+	e:=int(MOD8)
+	r.invsqrt()
+	if h!=nil {
+		h.copy(r)
+	}
+
+	r.sqr()
+	r.mul(F)
+	for i:=0;i<e-1;i++ {
+	    r.sqr()
+	}
+
+	if r.isunity() {
+		return 1
+	} else {
+		return 0
+	}
+}
+
+func (F *FP) invsqrt() {
+	if (MODTYPE == PSEUDO_MERSENNE || MODTYPE == GENERALISED_MERSENNE) {
+		F.copy(F.fpow())
+		return
+	}
+	e:=uint(MOD8)
+	m := NewBIGints(Modulus)
+	m.dec(1);
+	m.shr(e);
+	m.dec(1);
+	m.fshr(1);
+	F.copy(F.pow(m));
+}
+
 /* return TRUE if this==a */
 func (F *FP) Equals(a *FP) bool {
 	f := NewFPcopy(F)

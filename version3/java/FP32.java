@@ -26,7 +26,7 @@ public final class FP {
 
 
 	public static final int OMASK=(int)(-1)<<(CONFIG_FIELD.MODBITS%CONFIG_BIG.BASEBITS);
-	public static final int TBITS=CONFIG_FIELD.MODBITS%CONFIG_BIG.BASEBITS; // Number of active bits in top word 
+	public static final int TBITS=CONFIG_FIELD.MODBITS%CONFIG_BIG.BASEBITS; // Number of active bits in top word
 	public static final int TMASK=((int)1<<TBITS)-1;
 
 	public final BIG x;
@@ -61,14 +61,14 @@ public final class FP {
 		if (CONFIG_FIELD.MODTYPE==CONFIG_FIELD.MONTGOMERY_FRIENDLY)
 		{
 			BIG b;
-			int[] cr=new int[2];				
+			int[] cr=new int[2];
 			for (int i=0;i<BIG.NLEN;i++)
 			{
 				cr=BIG.muladd(d.w[i],ROM.MConst-1,d.w[i],d.w[BIG.NLEN+i-1]);
 				d.w[BIG.NLEN+i]+=cr[0];
-				d.w[BIG.NLEN+i-1]=cr[1];	
+				d.w[BIG.NLEN+i-1]=cr[1];
 			}
-			
+
 			b=new BIG(0);
 			for (int i=0;i<BIG.NLEN;i++ )
 				b.w[i]=d.w[BIG.NLEN+i];
@@ -95,7 +95,7 @@ public final class FP {
 			int carry=b.w[BIG.NLEN-1]>>TBITS;
 			b.w[BIG.NLEN-1]&=TMASK;
 			b.w[0]+=carry;
-			
+
 			b.w[224/CONFIG_BIG.BASEBITS]+=carry<<(224%CONFIG_BIG.BASEBITS);
 			b.norm();
 			return b;
@@ -178,7 +178,7 @@ public final class FP {
 		x=new BIG(a);
 		nres();
 	}
-	
+
 	public FP(FP a)
 	{
 		x=new BIG(a.x);
@@ -186,13 +186,13 @@ public final class FP {
 	}
 
 /* convert to string */
-	public String toString() 
+	public String toString()
 	{
 		String s=redc().toString();
 		return s;
 	}
 
-	public String toRawString() 
+	public String toRawString()
 	{
 		String s=x.toRawString();
 		return s;
@@ -218,7 +218,7 @@ public final class FP {
 			DBIG d=new DBIG(x);
 			return mod(d);
 		}
-		else 
+		else
 		{
 			BIG r=new BIG(x);
 			return r;
@@ -245,11 +245,11 @@ public final class FP {
 		x.zero();
 		XES=1;
 	}
-	
+
 /* set this=1 */
 	public void one()
 	{
-		x.one(); nres(); 
+		x.one(); nres();
 	}
 
 /* normalise this */
@@ -315,7 +315,7 @@ public final class FP {
 				mul(n);
 			}
 		}
-				
+
 		if (s) {neg(); norm();}
 	}
 
@@ -325,7 +325,7 @@ public final class FP {
 		DBIG d;
 		if ((long)XES*XES>(long)CONFIG_FIELD.FEXCESS) reduce();
 
-		d=BIG.sqr(x);	
+		d=BIG.sqr(x);
 		x.copy(mod(d));
 		XES=2;
 	}
@@ -349,9 +349,9 @@ public final class FP {
 		v |= v >>> 8;
 		v |= v >>> 16;
 
-		v = v - ((v >>> 1) & 0x55555555);                  
-		v = (v & 0x33333333) + ((v >>> 2) & 0x33333333);  
-		r = ((v + (v >>> 4) & 0xF0F0F0F) * 0x1010101) >>> 24; 
+		v = v - ((v >>> 1) & 0x55555555);
+		v = (v & 0x33333333) + ((v >>> 2) & 0x33333333);
+		r = ((v + (v >>> 4) & 0xF0F0F0F) * 0x1010101) >>> 24;
 		return r;
 	}
 
@@ -363,7 +363,7 @@ public final class FP {
 
 		sb=logb2(XES-1);
 		m.fshl(sb);
-		x.rsub(m);		
+		x.rsub(m);
 
 		XES=(1<<sb)+1;
 		if (XES>CONFIG_FIELD.FEXCESS) reduce();
@@ -406,19 +406,19 @@ public final class FP {
 		FP [] xp=new FP[11];
 		int[]  ac={1,2,3,6,12,15,30,60,120,240,255};
 // phase 1
-			
-		xp[0]=new FP(this);	// 1 
+
+		xp[0]=new FP(this);	// 1
 		xp[1]=new FP(this); xp[1].sqr(); // 2
 		xp[2]=new FP(xp[1]); xp[2].mul(this);  //3
-		xp[3]=new FP(xp[2]); xp[3].sqr();  // 6 
+		xp[3]=new FP(xp[2]); xp[3].sqr();  // 6
 		xp[4]=new FP(xp[3]); xp[4].sqr();  // 12
 		xp[5]=new FP(xp[4]); xp[5].mul(xp[2]);  // 15
 		xp[6]=new FP(xp[5]); xp[6].sqr();  // 30
 		xp[7]=new FP(xp[6]); xp[7].sqr();  // 60
 		xp[8]=new FP(xp[7]); xp[8].sqr();  // 120
 		xp[9]=new FP(xp[8]); xp[9].sqr();  // 240
-		xp[10]=new FP(xp[9]); xp[10].mul(xp[5]);  // 255		
-			
+		xp[10]=new FP(xp[9]); xp[10].mul(xp[5]);  // 255
+
 
 		n=CONFIG_FIELD.MODBITS;
 		if (CONFIG_FIELD.MODTYPE==CONFIG_FIELD.GENERALISED_MERSENNE)  // Goldilocks ONLY
@@ -440,7 +440,7 @@ public final class FP {
 		if (k!=0)
 		{
 			while (ac[i]>k) i--;
-			key.copy(xp[i]); 
+			key.copy(xp[i]);
 			k-=ac[i];
 		}
 		while (k!=0)
@@ -448,10 +448,10 @@ public final class FP {
 			i--;
 			if (ac[i]>k) continue;
 			key.mul(xp[i]);
-			k-=ac[i]; 
+			k-=ac[i];
 		}
 
-// phase 2 
+// phase 2
 		xp[1].copy(xp[2]);
 		xp[2].copy(xp[5]);
 		xp[3].copy(xp[10]);
@@ -464,7 +464,7 @@ public final class FP {
 		{
 			t.copy(xp[j++]);
 			for (i=0;i<m;i++)
-				t.sqr(); 
+				t.sqr();
 			xp[j].copy(xp[j-1]);
 			xp[j].mul(t);
 			m*=2;
@@ -490,7 +490,7 @@ public final class FP {
 		{
 			for (i=0;i<bw;i++ )
 				r.sqr();
-			r.mul(key); 
+			r.mul(key);
 		}
 
 		if (CONFIG_FIELD.MODTYPE==CONFIG_FIELD.GENERALISED_MERSENNE)  // Goldilocks ONLY
@@ -519,7 +519,7 @@ public final class FP {
 				mul(t);
 				y.sqr();
 
-			} 
+			}
 			y.sqr();
 			y.sqr();
 			mul(y);
@@ -578,6 +578,45 @@ public final class FP {
 		return r;
 	}
 
+	// check if `this` is unity
+	public boolean isunity()
+	{
+		FP n= new FP(this);
+		n.reduce();
+		return n.redc().isunity();
+	}
+
+	// Return 1 if quadratic residue else 0
+	public int qr(FP h) {
+		FP r=new FP(this);
+		int e=CONFIG_FIELD.MOD8;
+		r.invsqrt();
+		if (h!=null)
+			h.copy(r);
+
+		r.sqr();
+		r.mul(this);
+		for (int i=0;i<e-1;i++)
+			r.sqr();
+
+		return r.isunity()?1:0;
+	}
+
+	private void invsqrt() {
+		if (CONFIG_FIELD.MODTYPE == CONFIG_FIELD.PSEUDO_MERSENNE || CONFIG_FIELD.MODTYPE == CONFIG_FIELD.GENERALISED_MERSENNE)
+		{
+			copy(fpow());
+			return;
+		}
+		int e=CONFIG_FIELD.MOD8;
+		BIG m = new BIG(ROM.Modulus);
+		m.dec(1);
+		m.shr(e);
+		m.dec(1);
+		m.fshr(1);
+		copy(pow(m));
+	}
+
 /* return sqrt(this) mod Modulus */
 	public FP sqrt()
 	{
@@ -597,7 +636,7 @@ public final class FP {
 			i.mul(v); i.mul(v);
 			i.x.dec(1);
 			FP r=new FP(this);
-			r.mul(v); r.mul(i); 
+			r.mul(v); r.mul(i);
 			r.reduce();
 			return r;
 		}

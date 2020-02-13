@@ -424,6 +424,7 @@ impl ECP {
         }
 
         if b[0] == 0x04 {
+            // uncompressed point
             for i in 0..mb {
                 t[i] = b[i + mb + 1]
             }
@@ -434,6 +435,7 @@ impl ECP {
             return ECP::new_bigs(&px, &py);
         }
 
+        // compressed point
         if b[0] == 0x02 || b[0] == 0x03 {
             return ECP::new_bigint(&px, (b[0] & 1) as isize);
         }

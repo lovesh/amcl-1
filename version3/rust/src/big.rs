@@ -355,7 +355,7 @@ impl BIG {
     pub fn from_hex(val: String) -> BIG {
         BIG::fromstring(val)
     }
-    
+
     pub fn to_hex(&mut self) -> String {
         self.tostring()
     }
@@ -577,7 +577,7 @@ impl BIG {
         return u;
     }
 
-    /* return parity */
+    /* return parity, i.e. whether the first limb is even or not. Return 0 when even, 1 when odd */
     pub fn parity(&self) -> isize {
         return (self.w[0] % 2) as isize;
     }
