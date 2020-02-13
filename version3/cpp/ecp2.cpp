@@ -180,23 +180,31 @@ void ZZZ::ECP2_outputxyz(ECP2 *P)
 
 /* SU= 168 */
 /* Convert Q to octet string */
-void ZZZ::ECP2_toOctet(octet *W,ECP2 *Q)
+void ZZZ::ECP2_toOctet(octet *W, ECP2 *Q, bool compress)
 {
 	BIG b;
 	FP2 qx,qy;
     ECP2_get(&qx,&qy,Q);
 
 	FP_redc(b,&(qx.a));
-    BIG_toBytes(&(W->val[0]),b);
+    BIG_toBytes(&(W->val[1]),b);
     FP_redc(b,&(qx.b));
-    BIG_toBytes(&(W->val[MODBYTES_XXX]),b);
-    FP_redc(b,&(qy.a));
-    BIG_toBytes(&(W->val[2*MODBYTES_XXX]),b);
-    FP_redc(b,&(qy.b));
-    BIG_toBytes(&(W->val[3*MODBYTES_XXX]),b);
+    BIG_toBytes(&(W->val[MODBYTES_XXX+1]),b);
 
-    W->len=4*MODBYTES_XXX;
+    if (!compress)
+    {
+        W->val[0] = 0x04;
+        FP_redc(b, &(qy.a));
+        BIG_toBytes(&(W->val[2 * MODBYTES_XXX+1]), b);
+        FP_redc(b, &(qy.b));
+        BIG_toBytes(&(W->val[3 * MODBYTES_XXX+1]), b);
 
+        W->len = 4 * MODBYTES_XXX + 1;
+    } else {
+        W->val[0]=0x02;
+        if (FP2_sign(&qy)==1) W->val[0] = 0x03;
+        W->len = 2 * MODBYTES_XXX + 1;
+    }
 }
 
 /* SU= 176 */
@@ -205,16 +213,25 @@ int ZZZ::ECP2_fromOctet(ECP2 *Q,octet *W)
 {
 	BIG b;
     FP2 qx,qy;
-    BIG_fromBytes(b,&(W->val[0]));
-	FP_nres(&(qx.a),b);
-    BIG_fromBytes(b,&(W->val[MODBYTES_XXX]));
-    FP_nres(&(qx.b),b);
-    BIG_fromBytes(b,&(W->val[2*MODBYTES_XXX]));
-    FP_nres(&(qy.a),b);
-    BIG_fromBytes(b,&(W->val[3*MODBYTES_XXX]));
-    FP_nres(&(qy.b),b);
 
-    if (ECP2_set(Q,&qx,&qy)) return 1;
+    int typ = W->val[0];
+
+    BIG_fromBytes(b, &(W->val[1]));
+    FP_nres(&(qx.a), b);
+    BIG_fromBytes(b, &(W->val[MODBYTES_XXX+1]));
+    FP_nres(&(qx.b), b);
+
+    if (typ == 0x04)
+    {
+        BIG_fromBytes(b, &(W->val[2 * MODBYTES_XXX+1]));
+        FP_nres(&(qy.a), b);
+        BIG_fromBytes(b, &(W->val[3 * MODBYTES_XXX+1]));
+        FP_nres(&(qy.b), b);
+
+        if (ECP2_set(Q, &qx, &qy)) return 1;
+    } else {
+        if (ECP2_setx(Q, &qx, typ&1)) return 1;
+    }
     return 0;
 }
 

@@ -106,11 +106,12 @@ extern void ECP2_outputxyz(ECP2 *P);
 	@param S output octet string
 	@param P ECP2 instance to be converted to an octet string
  */
-extern void ECP2_toOctet(octet *S,ECP2 *P);
+extern void ECP2_toOctet(octet *S, ECP2 *P, bool c);
 /**	@brief Creates an ECP2 point from an octet string
  *
 	The octet string is in the form x|y
 	The real and imaginary parts of the x and y coordinates are in big-endian base 256 form.
+    If in compressed form only the x coordinate is provided as in 0x2|x if y is even, or 0x3|x if y is odd
 	@param P ECP2 instance to be created from the octet string
 	@param S input octet string
 	return 1 if octet string corresponds to a point on the curve, else 0

@@ -176,22 +176,31 @@ void ECP2_ZZZ_outputxyz(ECP2_ZZZ *P)
 
 /* SU= 168 */
 /* Convert Q to octet string */
-void ECP2_ZZZ_toOctet(octet *W,ECP2_ZZZ *Q)
+void ECP2_ZZZ_toOctet(octet *W, ECP2_ZZZ *Q, bool compress)
 {
     BIG_XXX b;
     FP2_YYY qx,qy;
     ECP2_ZZZ_get(&qx,&qy,Q);
 
     FP_YYY_redc(b,&(qx.a));
-    BIG_XXX_toBytes(&(W->val[0]),b);
+    BIG_XXX_toBytes(&(W->val[1]),b);
     FP_YYY_redc(b,&(qx.b));
-    BIG_XXX_toBytes(&(W->val[MODBYTES_XXX]),b);
-    FP_YYY_redc(b,&(qy.a));
-    BIG_XXX_toBytes(&(W->val[2*MODBYTES_XXX]),b);
-    FP_YYY_redc(b,&(qy.b));
-    BIG_XXX_toBytes(&(W->val[3*MODBYTES_XXX]),b);
+    BIG_XXX_toBytes(&(W->val[MODBYTES_XXX+1]),b);
 
-    W->len=4*MODBYTES_XXX;
+    if (!compress)
+    {
+        W->val[0] = 0x04;
+        FP_YYY_redc(b, &(qy.a));
+        BIG_XXX_toBytes(&(W->val[2 * MODBYTES_XXX+1]), b);
+        FP_YYY_redc(b, &(qy.b));
+        BIG_XXX_toBytes(&(W->val[3 * MODBYTES_XXX+1]), b);
+
+        W->len = 4 * MODBYTES_XXX+1;
+    } else {
+        W->val[0]=0x02;
+        if (FP2_YYY_sign(&qy)==1) W->val[0] = 0x03;
+        W->len = 2 * MODBYTES_XXX + 1;
+    }
 
 }
 
@@ -201,16 +210,24 @@ int ECP2_ZZZ_fromOctet(ECP2_ZZZ *Q,octet *W)
 {
     BIG_XXX b;
     FP2_YYY qx,qy;
-    BIG_XXX_fromBytes(b,&(W->val[0]));
-    FP_YYY_nres(&(qx.a),b);
-    BIG_XXX_fromBytes(b,&(W->val[MODBYTES_XXX]));
-    FP_YYY_nres(&(qx.b),b);
-    BIG_XXX_fromBytes(b,&(W->val[2*MODBYTES_XXX]));
-    FP_YYY_nres(&(qy.a),b);
-    BIG_XXX_fromBytes(b,&(W->val[3*MODBYTES_XXX]));
-    FP_YYY_nres(&(qy.b),b);
+    int typ = W->val[0];
 
-    if (ECP2_ZZZ_set(Q,&qx,&qy)) return 1;
+    BIG_XXX_fromBytes(b,&(W->val[1]));
+    FP_YYY_nres(&(qx.a),b);
+    BIG_XXX_fromBytes(b,&(W->val[MODBYTES_XXX+1]));
+    FP_YYY_nres(&(qx.b),b);
+
+    if (typ == 0x04)
+    {
+        BIG_XXX_fromBytes(b, &(W->val[2 * MODBYTES_XXX+1]));
+        FP_YYY_nres(&(qy.a), b);
+        BIG_XXX_fromBytes(b, &(W->val[3 * MODBYTES_XXX+1]));
+        FP_YYY_nres(&(qy.b), b);
+
+        if (ECP2_ZZZ_set(Q, &qx, &qy)) return 1;
+    } else {
+        if (ECP2_ZZZ_setx(Q, &qx, typ&1)) return 1;
+    }
     return 0;
 }
 
@@ -272,7 +289,7 @@ int ECP2_ZZZ_set(ECP2_ZZZ *P,FP2_YYY *x,FP2_YYY *y)
 
 /* Set P=(x,y). Return 1 if (x,.) is on the curve, else return 0 */
 /* SU= 232 */
-int ECP2_ZZZ_setx(ECP2_ZZZ *P,FP2_YYY *x)
+int ECP2_ZZZ_setx(ECP2_ZZZ *P, FP2_YYY *x, int s)
 {
     FP2_YYY y;
     ECP2_ZZZ_rhs(&y,x);

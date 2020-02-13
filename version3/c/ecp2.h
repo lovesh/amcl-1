@@ -122,12 +122,14 @@ extern void ECP2_ZZZ_outputxyz(ECP2_ZZZ *P);
 	Convert the real and imaginary parts of the x and y coordinates to big-endian base 256 form.
 	@param S output octet string
 	@param P ECP2 instance to be converted to an octet string
+    @param c compression required, true or false
  */
-extern void ECP2_ZZZ_toOctet(octet *S,ECP2_ZZZ *P);
+extern void ECP2_ZZZ_toOctet(octet *S,ECP2_ZZZ *P,bool c);
 /**	@brief Creates an ECP2 point from an octet string
  *
 	The octet string is in the form x|y
 	The real and imaginary parts of the x and y coordinates are in big-endian base 256 form.
+    If in compressed form only the x coordinate is provided as in 0x2|x if y is even, or 0x3|x if y is odd
 	@param P ECP2 instance to be created from the octet string
 	@param S input octet string
 	return 1 if octet string corresponds to a point on the curve, else 0
@@ -150,14 +152,15 @@ extern void ECP2_ZZZ_rhs(FP2_YYY *r,FP2_YYY *x);
 	@return 1 if point exists, else 0
  */
 extern int ECP2_ZZZ_set(ECP2_ZZZ *P,FP2_YYY *x,FP2_YYY *y);
-/**	@brief Set ECP to point(x,[y]) given x
+/**	@brief Set ECP to point(x,[y]) given x and sign of y
  *
 	Point P set to infinity if no such point on the curve. Otherwise y coordinate is calculated from x.
 	@param P ECP instance to be set (x,[y])
 	@param x BIG x coordinate of point
+    @param s sign of y
 	@return 1 if point exists, else 0
  */
-extern int ECP2_ZZZ_setx(ECP2_ZZZ *P,FP2_YYY *x);
+extern int ECP2_ZZZ_setx(ECP2_ZZZ *P, FP2_YYY *x, int s);
 /**	@brief Negation of an ECP2 point
  *
 	@param P ECP2 instance, on exit = -P

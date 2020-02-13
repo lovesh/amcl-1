@@ -388,10 +388,11 @@ impl ECP {
             return;
         }
 
-        if compress {
-            b[0] = 0x02;
-            if W.y.redc().parity() == 1 {
+        if compress {       // Indicates a compressed point
+            if W.y.redc().parity() == 1 {   // Indicates which y coordinate is being chosen
                 b[0] = 0x03
+            } else {
+                b[0] = 0x02;
             }
             return;
         }

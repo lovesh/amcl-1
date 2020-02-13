@@ -169,7 +169,7 @@ func (E *ECP2) getz() *FP2 {
 }
 
 /* convert to byte array */
-func (E *ECP2) ToBytes(b []byte) {
+func (E *ECP2) ToBytes(b []byte,compress bool) {
 	var t [int(MODBYTES)]byte
 	MB := int(MODBYTES)
 
@@ -178,22 +178,30 @@ func (E *ECP2) ToBytes(b []byte) {
 	W.Affine()
 
 	W.x.GetA().ToBytes(t[:])
-	for i := 0; i < MB; i++ {
-		b[i] = t[i]
-	}
-	W.x.GetB().ToBytes(t[:])
-	for i := 0; i < MB; i++ {
-		b[i+MB] = t[i]
-	}
+    for i := 0; i < MB; i++ {
+        b[i+1] = t[i]
+    }
+    W.x.GetB().ToBytes(t[:])
+    for i := 0; i < MB; i++ {
+        b[i+MB+1] = t[i]
+    }
 
-	W.y.GetA().ToBytes(t[:])
-	for i := 0; i < MB; i++ {
-		b[i+2*MB] = t[i]
-	}
-	W.y.GetB().ToBytes(t[:])
-	for i := 0; i < MB; i++ {
-		b[i+3*MB] = t[i]
-	}
+    if !compress {
+        b[0]=0x04
+        W.y.GetA().ToBytes(t[:])
+        for i := 0; i < MB; i++ {
+            b[i+2*MB+1] = t[i]
+        }
+        W.y.GetB().ToBytes(t[:])
+        for i := 0; i < MB; i++ {
+            b[i+3*MB+1] = t[i]
+        }
+    } else {
+        b[0]=0x02
+        if W.y.sign() == 1 {
+            b[0]=0x03
+        }
+    }
 }
 
 /* convert from byte array to point */
